@@ -1,42 +1,14 @@
-% function optimal_waypoints = optimize_waypoints(waypoints, init_state)
-%     eucl_dist = @(curr, target) sqrt((curr(1) - target(1))^2 + (curr(2) - target(2))^2);
-% 
-%     n = size(waypoints, 1);
-%     optimal_waypoints = zeros(n, 2);
-%     used = false(n, 1);
-% 
-%     current_pose = init_state(:);
-% 
-%     for i = 1:n
-%         nearest_dist = Inf;
-%         nearest_idx = -1;
-% 
-%         for j = 1:n
-%             if ~used(j)
-%                 d = eucl_dist(current_pose, waypoints(j, :)');
-%                 if d < nearest_dist
-%                     nearest_dist = d;
-%                     nearest_idx = j;
-%                 end
-%             end
-%         end
-% 
-%         current_pose = waypoints(nearest_idx, :)';
-%         used(nearest_idx) = true;
-%         optimal_waypoints(i, :) = current_pose';
-%     end
-% end
-
-function [OptimalTour, mincost] = optimize_waypoints(cities)
-
-    [NumOfCities, ~] = size(cities);
-    Primes = primes(NumOfCities * 10);
+function optimal_waypoints = optimize_waypoints(waypoints, init_state)
+    waypoints = [init_state; waypoints];
+    
+    [num_of_waypoints, ~] = size(waypoints);
+    Primes = primes(num_of_waypoints * 10);
 
     %% Distance matrix
-    D = diag(inf(1, NumOfCities)); % Inf cost to self
-    for i = 1:NumOfCities
-        for j = i+1:NumOfCities
-            D(i,j) = norm(cities(i,:) - cities(j,:));
+    D = diag(inf(1, num_of_waypoints)); % Inf cost to self
+    for i = 1:num_of_waypoints
+        for j = i+1:num_of_waypoints
+            D(i,j) = norm(waypoints(i,:) - waypoints(j,:));
             D(j,i) = D(i,j);
         end
     end
@@ -44,8 +16,8 @@ function [OptimalTour, mincost] = optimize_waypoints(cities)
 
     %% Initialize data structure
     NumOfDataSets = 1;
-    for i = 2:NumOfCities
-        NumOfDataSets = NumOfDataSets + nchoosek(NumOfCities, i);
+    for i = 2:num_of_waypoints
+        NumOfDataSets = NumOfDataSets + nchoosek(num_of_waypoints, i);
     end
 
     Data(NumOfDataSets).S = [];
@@ -63,7 +35,7 @@ function [OptimalTour, mincost] = optimize_waypoints(cities)
     Data(1).m = [];
 
     % Initialize single-step paths
-    for s = 2:NumOfCities
+    for s = 2:num_of_waypoints
         Data(s).S = [1, s];
         Data(s).l = s;
         Data(s).cost = D(s,1);
@@ -73,13 +45,13 @@ function [OptimalTour, mincost] = optimize_waypoints(cities)
     end
 
     IndexStartPrevStep = 2;
-    IndexLastStep = NumOfCities;
+    IndexLastStep = num_of_waypoints;
     CurrentData = IndexLastStep;
 
     %% Main Dynamic Programming loop
-    for s = 3:NumOfCities
-        % Generate sets of s-1 cities excluding city 1
-        TempSets = nchoosek(2:NumOfCities, s-1);
+    for s = 3:num_of_waypoints
+        % Generate sets of s-1 waypoints excluding city 1
+        TempSets = nchoosek(2:num_of_waypoints, s-1);
         [NumOfSets, ~] = size(TempSets);
 
         for j = 1:NumOfSets
@@ -122,17 +94,24 @@ function [OptimalTour, mincost] = optimize_waypoints(cities)
     end
 
     % Find minimum total cost
-    [mincost, indexcost] = min(candidatecost);
+    [~, indexcost] = min(candidatecost);
     Temp = Data(IndexStartPrevStep + indexcost - 1);
 
     %% Reconstruct optimal tour
-    OptimalTour = 1;
+    optimal_waypoints = 1;
     while ~isempty(Temp.Pre)
-        OptimalTour = [OptimalTour, Temp.l];
+        optimal_waypoints = [optimal_waypoints, Temp.l];
         Temp = Data(Temp.Pre);
     end
-    OptimalTour = [OptimalTour, 1];
+    optimal_waypoints_order = [optimal_waypoints, 1];
 
+    % Preallocate waypoints array.
+    n = size(waypoints, 1);
+    optimal_waypoints = [n, size(waypoints, 2)];
+    
+    for i = 1:size(waypoints, 1)
+        optimal_waypoints(i, :) = waypoints(optimal_waypoints_order(i), :);
+    end
 end
 
 %% Helper function to calculate Look-Up Table
