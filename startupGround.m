@@ -25,4 +25,4 @@ X = randi([-500, 500], 10, 1);
 Y = randi([-500, 500], 10, 1);
 waypoints = [X Y];
 
-optimal_waypoints = optimize_waypoints(waypoints, init_state);
+optimize_waypoints(waypoints, init_state);
