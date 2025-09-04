@@ -24,6 +24,8 @@ init_state = [robot.X robot.Y];
 X = randi([-500, 500], 10, 1);
 Y = randi([-500, 500], 10, 1);
 waypoints = [X Y];
-
+dt = 0.05;
+A = [1 0 0 dt 0 0;
+    0 10 ]
 
 optimal_waypoints = optimize_waypoints(waypoints, init_state);
