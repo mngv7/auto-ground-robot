@@ -1,0 +1,69 @@
+function [state_hat] = kalman_filter(state_noisy)
+    % Multi-dimensional Kalman filter
+    % state_noisy : measurement vector (m×1)
+    % state_hat   : filtered state estimate (6×1)
+
+    persistent x_hat P A H Q R initialized
+
+    if (isempty(initialized))
+        dt = 0.01;
+        
+        % Process matrix A
+        A = [1, 0, 0, dt, 0,  0;
+             0, 1, 0, 0,  dt, 0;
+             0, 0, 1, 0,  0,  dt;
+             0, 0, 0, 1,  0,  0;
+             0, 0, 0, 0,  1,  0;
+             0, 0, 0, 0,  0,  1];
+        
+        % Process noise covariance Q
+        sigma = 1e-1;
+        sigma_theta = 2;
+        sigmadot = 5e-2;
+        Q = diag([sigma, sigma, sigma_theta, sigmadot, sigmadot, sigmadot]);
+        % Measurement noise covariance R
+        Const_R = 0.5;
+        R = Const_R * eye(3);
+        
+        % Measurement matrix H
+        H = [1, 0, 0, 0, 0, 0;
+             0, 1, 0, 0, 0, 0;
+             0, 0, 1, 0, 0, 0];
+        
+        % Initial state estimate
+        x_hat = [0; 0; 0; 0; 0; 0];
+        
+        % Initial error covariance matrix
+        P = eye(6) * 1000;  % Large initial uncertainty
+        
+        initialized = true;
+    end
+
+
+    % Kalman Filter Implementation
+    % prediction
+    x_predict = A * x_hat;
+    P_predict = A * P * A' + Q;
+
+    % update
+    S = H * P_predict * H' + R;
+    K = (P * H') * inv(S);
+    z = state_noisy - H * x_predict;
+    x_hat = x_predict + K * z;
+
+
+    % % Kalman implementation
+    % % prediction
+    % x_predict = A * x_hat;
+    % p_predict = A * P * A' + Q;
+    % % residuals
+    % z = state_noisy - H * x_predict;
+    % S = H * p_predict * H' + R;  % Innovation covariance
+    % % Kalman gain
+    % K = p_predict * H' / S;
+    % % update state estimation
+    % x_hat = x_predict + K * z;
+    % % update covariances
+    % P = (eye(6) - K*H) * p_predict;
+    % state_hat = x_hat;
+end

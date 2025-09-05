@@ -1,0 +1,31 @@
+%% close previously open model
+close_system('sl_groundvehicleDynamics',0);
+ 
+
+%% add toolboxes to path
+homedir = pwd; 
+addpath( genpath(strcat(homedir,[filesep,'toolboxes'])));
+addpath('functions');
+
+cd('toolboxes/MRTB');
+startMobileRoboticsSimulationToolbox;
+
+cd(homedir);
+
+%% open current model
+open_system('sl_groundvehicleDynamics'); %differential robot
+
+cd(homedir);
+
+%% Generate and Optimize Waypoints
+
+init_state = [robot.X robot.Y];
+
+X = randi([-500, 500], 10, 1);
+Y = randi([-500, 500], 10, 1);
+waypoints = [X Y];
+dt = 0.05;
+A = [1 0 0 dt 0 0;
+    0 10 ]
+
+optimal_waypoints = optimize_waypoints(waypoints, init_state);
