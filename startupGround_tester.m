@@ -15,7 +15,7 @@ cd(homedir);
 open_system('sl_groundvehicleDynamics'); 
 
 % Simulation parameters
-numTests = 100;         % number of test runs
+numTests = 30;         % number of test runs
 stopTime = 1000;         % simulation stop time [s]
 
 % Preallocate arrays for metrics

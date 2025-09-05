@@ -20,19 +20,18 @@ X = randi([-500, 500], 10, 1);
 Y = randi([-500, 500], 10, 1);
 waypoints = [X Y];
 
-optimal_waypoints = optimize_waypoints(waypoints, init_state);
+%optimal_waypoints = optimize_waypoints(waypoints, init_state);
 
 %% Run simulation and measure time
 tic;
-sim('sl_groundvehicleDynamics');
+out = sim('sl_groundvehicleDynamics');
 mission_time = toc;
 
-%% Extract pose data
-x_log = simout.pose.Data(:,1);
-y_log = simout.pose.Data(:,2);
-theta_log = simout.pose.Data(:,3);
+%%Extract pose data
+x_log = out.simout.pose.Data(:,1);
+y_log = out.simout.pose.Data(:,2);
 
-%% Compute waypoint capture error
+% Compute waypoint capture error
 num_waypoints = size(optimal_waypoints, 1);
 capture_errors = zeros(num_waypoints, 1);
 
@@ -46,7 +45,7 @@ end
 avg_capture_error = mean(capture_errors);
 fprintf('Average Waypoint Capture Error: %.4f m\n', avg_capture_error);
 
-%% Compute RMS cross-track error
+% Compute RMS cross-track error
 cte_log = evalin('base','cte_log');
 rms_cte = sqrt(mean(cte_log.^2));
 fprintf('RMS Cross-Track Error: %.4f m\n', rms_cte);
