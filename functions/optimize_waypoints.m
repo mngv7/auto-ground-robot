@@ -1,18 +1,21 @@
+% Credit to Elad Kivelelvitch for original Held-Karp MATLAB implementation
+% Modifed by: n11592931 Zackariya Taylor for assignment purposes
+
 function optimal_waypoints = optimize_waypoints(waypoints, init_state)
+    % Starts at init_state, visits all waypoints, does not return to the start.
+
     waypoints = [init_state; waypoints];
-    
     [num_of_waypoints, ~] = size(waypoints);
     Primes = primes(num_of_waypoints * 10);
 
     %% Distance matrix
-    D = diag(inf(1, num_of_waypoints)); % Inf cost to self
+    D = diag(inf(1, num_of_waypoints));
     for i = 1:num_of_waypoints
         for j = i+1:num_of_waypoints
             D(i,j) = norm(waypoints(i,:) - waypoints(j,:));
             D(j,i) = D(i,j);
         end
     end
-
 
     %% Initialize data structure
     NumOfDataSets = 1;
@@ -27,7 +30,6 @@ function optimal_waypoints = optimize_waypoints(waypoints, init_state)
     Data(NumOfDataSets).m = [];
     LookUpTable(NumOfDataSets) = 0;
 
-    % Base case: only city 1
     Data(1).S = 1;
     Data(1).l = 1;
     Data(1).cost = 0;
@@ -38,7 +40,7 @@ function optimal_waypoints = optimize_waypoints(waypoints, init_state)
     for s = 2:num_of_waypoints
         Data(s).S = [1, s];
         Data(s).l = s;
-        Data(s).cost = D(s,1);
+        Data(s).cost = D(1,s);
         Data(s).Pre = 1;
         Data(s).m = 1;
         LookUpTable(s) = calcLUT(Data(s).S, s, Primes);
@@ -50,13 +52,11 @@ function optimal_waypoints = optimize_waypoints(waypoints, init_state)
 
     %% Main Dynamic Programming loop
     for s = 3:num_of_waypoints
-        % Generate sets of s-1 waypoints excluding city 1
         TempSets = nchoosek(2:num_of_waypoints, s-1);
         [NumOfSets, ~] = size(TempSets);
 
         for j = 1:NumOfSets
             for k = 1:s-1
-                % Set S minus city k
                 SminuskSet = [1, TempSets(j, [1:k-1, k+1:end])];
                 candidatecost = inf(1, length(SminuskSet));
                 indices = zeros(1, length(SminuskSet));
@@ -65,7 +65,6 @@ function optimal_waypoints = optimize_waypoints(waypoints, init_state)
                     LUV = calcLUT(SminuskSet, SminuskSet(mm), Primes);
                     index = find(LUV == LookUpTable(IndexStartPrevStep:IndexLastStep));
                     index = index + IndexStartPrevStep - 1;
-
                     if ~isempty(index)
                         candidatecost(mm) = Data(index).cost + D(SminuskSet(mm), TempSets(j,k));
                         indices(mm) = index;
@@ -82,39 +81,35 @@ function optimal_waypoints = optimize_waypoints(waypoints, init_state)
                 LookUpTable(CurrentData) = calcLUT(Data(CurrentData).S, TempSets(j,k), Primes);
             end
         end
-
         IndexStartPrevStep = IndexLastStep + 1;
         IndexLastStep = CurrentData;
     end
 
-    %% Add distance back to city 1
+    %% Find minimum cost path (not a cycle)
     candidatecost = inf(1, IndexLastStep - IndexStartPrevStep + 1);
     for i = IndexStartPrevStep:IndexLastStep
-        candidatecost(i - IndexStartPrevStep + 1) = Data(i).cost + D(Data(i).l, 1);
+        candidatecost(i - IndexStartPrevStep + 1) = Data(i).cost;
     end
 
-    % Find minimum total cost
     [~, indexcost] = min(candidatecost);
     Temp = Data(IndexStartPrevStep + indexcost - 1);
 
-    %% Reconstruct optimal tour
-    optimal_waypoints = 1;
+    %% Reconstruct optimal path
+    optimal_waypoints = [Temp.l];
     while ~isempty(Temp.Pre)
-        optimal_waypoints = [optimal_waypoints, Temp.l];
         Temp = Data(Temp.Pre);
+        optimal_waypoints = [Temp.l, optimal_waypoints];
     end
-    optimal_waypoints_order = [optimal_waypoints, 1];
 
-    % Preallocate waypoints array.
-    n = size(waypoints, 1);
-    optimal_waypoints = [n, size(waypoints, 2)];
-    
-    for i = 1:size(waypoints, 1)
-        optimal_waypoints(i, :) = waypoints(optimal_waypoints_order(i), :);
+    % Convert indices to coordinates
+    n = length(optimal_waypoints);
+    coords = zeros(n,2);
+    for i = 1:n
+        coords(i,:) = waypoints(optimal_waypoints(i),:);
     end
+    optimal_waypoints = coords(2:end,:);
 end
 
-%% Helper function to calculate Look-Up Table
 function LUT = calcLUT(vec, last, Primes)
     LUT = Primes(last);
     for i = 2:length(vec)
