@@ -20,7 +20,7 @@ X = randi([-500, 500], 10, 1);
 Y = randi([-500, 500], 10, 1);
 waypoints = [X Y];
 
-%optimal_waypoints = optimize_waypoints(waypoints, init_state);
+optimal_waypoints = optimize_waypoints(waypoints, init_state);
 
 %% Run simulation and measure time
 tic;
@@ -44,9 +44,9 @@ for i = 1:num_waypoints
 end
 
 avg_capture_error = mean(capture_errors);
-fprintf('Average Waypoint Capture Error: %.2f m\n', avg_capture_error);
+fprintf('Average Waypoint Capture Error: %.4f m\n', avg_capture_error);
 
 %% Compute RMS cross-track error
 cte_log = evalin('base','cte_log');
 rms_cte = sqrt(mean(cte_log.^2));
-fprintf('RMS Cross-Track Error: %.2f m\n', rms_cte);
+fprintf('RMS Cross-Track Error: %.4f m\n', rms_cte);
