@@ -1,29 +1,52 @@
-%% close previously open model
-close_system('sl_groundvehicleDynamics',0);
- 
+%% Close previously open model
+close_system('sl_groundvehicleDynamics', 0);
 
-%% add toolboxes to path
+%% Add toolboxes to path
 homedir = pwd; 
-addpath( genpath(strcat(homedir,[filesep,'toolboxes'])));
+addpath(genpath(fullfile(homedir, 'toolboxes')));
 addpath('functions');
 
 cd('toolboxes/MRTB');
 startMobileRoboticsSimulationToolbox;
-
 cd(homedir);
 
-%% open current model
-open_system('sl_groundvehicleDynamics'); %differential robot
-
-cd(homedir);
+%% Open current model
+open_system('sl_groundvehicleDynamics'); % differential robot
 
 %% Generate and Optimize Waypoints
-
 init_state = [robot.X robot.Y];
 
 X = randi([-500, 500], 10, 1);
 Y = randi([-500, 500], 10, 1);
 waypoints = [X Y];
 
+%optimal_waypoints = optimize_waypoints(waypoints, init_state);
 
-optimal_waypoints = optimize_waypoints(waypoints, init_state);
+%% Run simulation and measure time
+tic;
+sim('sl_groundvehicleDynamics');
+mission_time = toc;
+
+%% Extract pose data
+x_log = simout.pose.Data(:,1);
+y_log = simout.pose.Data(:,2);
+theta_log = simout.pose.Data(:,3);
+
+%% Compute waypoint capture error
+num_waypoints = size(optimal_waypoints, 1);
+capture_errors = zeros(num_waypoints, 1);
+
+for i = 1:num_waypoints
+    dx = x_log - optimal_waypoints(i,1);
+    dy = y_log - optimal_waypoints(i,2);
+    dists = sqrt(dx.^2 + dy.^2);
+    capture_errors(i) = min(dists); % closest distance to waypoint
+end
+
+avg_capture_error = mean(capture_errors);
+fprintf('Average Waypoint Capture Error: %.2f m\n', avg_capture_error);
+
+%% Compute RMS cross-track error
+cte_log = evalin('base','cte_log');
+rms_cte = sqrt(mean(cte_log.^2));
+fprintf('RMS Cross-Track Error: %.2f m\n', rms_cte);
