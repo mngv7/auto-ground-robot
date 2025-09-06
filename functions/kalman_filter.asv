@@ -1,4 +1,4 @@
-function [state_hat, k_gain] = kalman_filter(state_noisy)
+function [state_hat] = kalman_filter(state_noisy)
     persistent x_hat P A Q R H initialized
     
     if isempty(initialized)
@@ -8,10 +8,10 @@ function [state_hat, k_gain] = kalman_filter(state_noisy)
              0 0 1];
         
         % Process noise covariance Q
-        Q = diag([0.1362, 0.08, 0.534]); % Tuned process noise
+        Q = diag([0.136, 0.08, 0.534]); % Tuned process noise
         
         % Measurement noise covariance R
-        R = diag([0.1 0.01 0.88]);  
+        R = diag([1 1 0.88]);  
         
         % Measurement matrix
         H = [1 0 0;
@@ -37,5 +37,5 @@ function [state_hat, k_gain] = kalman_filter(state_noisy)
     P = (eye(3) - K * H) * P_pred;
 
     state_hat = x_hat;
-    k_gain = K;
+
 end

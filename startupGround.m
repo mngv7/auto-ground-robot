@@ -51,4 +51,4 @@ fprintf('Average Waypoint Capture Error: %.4f m\n', avg_capture_error);
 % Compute RMS cross-track error
 cte_log = evalin('base','cte_log');
 rms_cte = sqrt(mean(cte_log.^2));
-fprintf('RMS Cross-Track Error: %.4f m\n', rms_cte);
+fprintf('RMS Cross-Track Error: %.10f m\n', rms_cte);
