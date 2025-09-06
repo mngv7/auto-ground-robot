@@ -29,10 +29,14 @@ out = sim('sl_groundvehicleDynamics');
 mission_time = toc;
 
 fprintf('Trip time: %.4f s\n', mission_time)
-
-%%Extract pose data
-x_log = out.simout.pose.Data(:,1);
-y_log = out.simout.pose.Data(:,2);
+if isempty(simout)
+    %%Extract pose data
+    x_log = out.simout.pose.Data(:,1);
+    y_log = out.simout.pose.Data(:,2);
+else
+    x_log = simout.pose.Data(:,1);
+    y_log = simout.pose.Data(:,2);
+end
 
 % Compute waypoint capture error
 num_waypoints = size(optimal_waypoints, 1);
