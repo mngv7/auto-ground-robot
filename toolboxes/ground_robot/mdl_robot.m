@@ -15,8 +15,8 @@
 %
 
 
-robot.X = 0;                  
-robot.Y = 0;                   
+robot.X = 2;                  
+robot.Y = 2;                   
 robot.Theta = 0;                
 
 

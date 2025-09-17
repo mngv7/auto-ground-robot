@@ -16,8 +16,16 @@ open_system('sl_groundvehicleDynamics'); % differential robot
 %% Generate and Optimize Waypoints
 init_state = [robot.X robot.Y];
 
-X = randi([-500, 500], 10, 1);
-Y = randi([-500, 500], 10, 1);
+x_bound = [0, 52];
+y_bound = [0, 41];
+
+wall_padding = [2, -2];
+
+no_waypoints = 5;
+
+X = randi(x_bound + wall_padding, no_waypoints , 1);
+Y = randi(y_bound + wall_padding, no_waypoints , 1);
+
 waypoints = [X Y];
 
 optimal_waypoints = optimize_waypoints(waypoints, init_state);
