@@ -10,7 +10,12 @@ cd('toolboxes/MRTB');
 startMobileRoboticsSimulationToolbox;
 cd(homedir);
 
+%% Load Map and Obstacles
+load("complexMap_air_ground.mat")
+load("obstacles_air_ground.mat")
+
 %% Open current model
+scanAngles = linspace(-pi/4, pi/4, 10);
 open_system('sl_groundvehicleDynamics'); % differential robot
 
 %% Generate and Optimize Waypoints

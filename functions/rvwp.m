@@ -1,4 +1,4 @@
-function [v_control, w_control, stop] = rvwp(waypoints, state)
+function [v_control, w_control, stop] = rvwp(waypoints, state, ranges, detections)
     % RVWP Controller with persistent waypoint index and cross-track error logging
     % waypoints: Nx2 array [x, y]
     % state: [x, y, psi]
@@ -7,8 +7,8 @@ function [v_control, w_control, stop] = rvwp(waypoints, state)
     % ===== Parameters =====
     k = 8.0;                  % heading error gain
     base_look_ahead = 3.0;    % fixed look-ahead distance
-    v_max = 12.0;             % max linear velocity
-    capture_threshold = 0.7; % waypoint capture threshold
+    v_max = 1.0;             % max linear velocity
+    capture_threshold = 0.2; % waypoint capture threshold
 
     x = state(1);
     y = state(2);
@@ -18,7 +18,7 @@ function [v_control, w_control, stop] = rvwp(waypoints, state)
     Wy = waypoints(:,2)';
     N = length(Wx);
 
-    % ===== Persistent variables =====
+    % Persistent variables
     persistent n cte_log
     if isempty(n)
         n = 1;
@@ -27,7 +27,7 @@ function [v_control, w_control, stop] = rvwp(waypoints, state)
         cte_log = [];
     end
 
-    % ===== Check if last waypoint reached =====
+    % Check if last waypoint reached
     if n >= N
         v_control = 0;
         w_control = 0;
@@ -37,7 +37,7 @@ function [v_control, w_control, stop] = rvwp(waypoints, state)
         stop = 0;
     end
 
-    % ===== Distance to next waypoint =====
+    % Distance to next waypoint
     d_next = sqrt((x - Wx(n+1))^2 + (y - Wy(n+1))^2);
     if d_next < capture_threshold
         n = n + 1;
@@ -49,7 +49,7 @@ function [v_control, w_control, stop] = rvwp(waypoints, state)
         end
     end
 
-    % ===== Core RVWP logic =====
+    % Core RVWP logic
     Ru = sqrt((x - Wx(n))^2 + (y - Wy(n))^2);
     theta = atan2(Wy(n+1) - Wy(n), Wx(n+1) - Wx(n));
     theta_u = atan2(y - Wy(n), x - Wx(n));
@@ -62,7 +62,7 @@ function [v_control, w_control, stop] = rvwp(waypoints, state)
     psi_d = atan2(S_y - y, S_x - x);
     error = atan2(sin(psi_d - psi), cos(psi_d - psi));
 
-    % ===== Controls =====
+    % Controls
     w_control = k * error;
 
     % Adaptive linear velocity based on heading alignment and distance
@@ -71,10 +71,9 @@ function [v_control, w_control, stop] = rvwp(waypoints, state)
     v_control = v_max * alignment_factor * distance_factor;
     v_control = max(min(v_control, v_max), 0.5); % clamp to safe range
 
-    % ===== Cross-track error logging =====
+    % Cross-track error logging
     cross_track_error = Ru * sin(beta);
     cte_log(end+1) = cross_track_error;
 
-    % Optional: expose cte_log for post-processing
     assignin('base', 'cte_log', cte_log);
 end
