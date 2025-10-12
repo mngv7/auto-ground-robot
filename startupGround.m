@@ -19,14 +19,37 @@ init_state = [robot.X robot.Y];
 x_bound = [1, 52];
 y_bound = [1, 41];
 
-wall_padding = 0.15 + 0.25;
-
 no_waypoints = 5;
 
 waypoints = generate_waypoints(logical_map, x_bound, y_bound, no_waypoints, obstacles);
 
-optimal_waypoints = optimize_waypoints(waypoints, init_state);
+[optimal_waypoints, paths] = optimize_waypoints(waypoints, init_state, logical_map);
 optimal_waypoints = [init_state; optimal_waypoints];
+
+% Make paths symmetric
+for i = 1:size(paths,1)
+    for j = 1:size(paths,2)
+        if all(paths(i,j,:,:) == 0, 'all') && any(paths(j,i,:,:) ~= 0, 'all')
+            paths(i,j,:,:) = flip(paths(j,i,:,:), 3);
+        end
+    end
+end
+
+waypoints = [init_state; waypoints];
+
+complete_path = [];
+
+for i = 1:5
+    curr = optimal_waypoints(i,:); % 2 2
+    next = optimal_waypoints(i+1,:); % 2 15
+    idx_curr = find(ismember(waypoints, curr, 'rows'));
+    idx_next = find(ismember(waypoints, next, 'rows'));
+    path = squeeze(paths(idx_curr, idx_next, 1:10, :));
+    if i ~= 5
+        path(end,:) = [];
+    end
+    complete_path = [complete_path; path];
+end
 
 %% Sanity check
 

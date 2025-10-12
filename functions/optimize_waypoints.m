@@ -1,7 +1,7 @@
 % Credit to Elad Kivelelvitch for original Held-Karp MATLAB implementation
 % Modifed by: n11592931 Zackariya Taylor for assignment purposes
 
-function optimal_waypoints = optimize_waypoints(waypoints, init_state)
+function [optimal_waypoints, paths] = optimize_waypoints(waypoints, init_state, map)
     % Starts at init_state, visits all waypoints, does not return to the start.
 
     waypoints = [init_state; waypoints];
@@ -10,9 +10,16 @@ function optimal_waypoints = optimize_waypoints(waypoints, init_state)
 
     %% Distance matrix
     D = diag(inf(1, num_of_waypoints));
+    wp_interval = 10;
+
+    paths = zeros(num_of_waypoints, num_of_waypoints, wp_interval, 2);  
+
     for i = 1:num_of_waypoints
         for j = i+1:num_of_waypoints
-            D(i,j) = norm(waypoints(i,:) - waypoints(j,:));
+            start = waypoints(i,:);
+            goal = waypoints(j,:);
+            [D(i,j), path] = astar_search(start, goal, map, wp_interval);
+            paths(i,j,1:size(path,1), :) = path;
             D(j,i) = D(i,j);
         end
     end
