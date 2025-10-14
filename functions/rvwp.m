@@ -7,7 +7,7 @@ function [v_control, w_control, stop] = rvwp(waypoints, state)
     % ===== Parameters =====
     k = 8.0;                  % heading error gain
     base_look_ahead = 3.0;    % fixed look-ahead distance
-    v_max = 12.0;             % max linear velocity
+    v_max = 0.1;             % max linear velocity
     capture_threshold = 0.7; % waypoint capture threshold
 
     x = state(1);

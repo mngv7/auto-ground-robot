@@ -1,6 +1,6 @@
 %% Close previously open model
 close_system('sl_groundvehicleDynamics', 0);
-
+clear all; clc;
 %% Add toolboxes to path
 homedir = pwd; 
 addpath(genpath(fullfile(homedir, 'toolboxes')));
@@ -11,10 +11,16 @@ startMobileRoboticsSimulationToolbox;
 cd(homedir);
 
 %% Open current model
-open_system('sl_groundvehicleDynamics'); % differential robot
+open_system('sl_groundvehicleDynamics'); % dif ferential robot
+load('obstacles_air_ground.mat')
+load('complexMap_air_ground.mat')
+
+%% LiDAR configuration
+scan_angles = linspace(-pi/4,pi/4,50);
 
 %% Generate and Optimize Waypoints
 init_state = [robot.X robot.Y];
+
 
 x_bound = [0, 52];
 y_bound = [0, 41];
@@ -64,3 +70,4 @@ fprintf('Average Waypoint Capture Error: %.4f m\n', avg_capture_error);
 cte_log = evalin('base','cte_log');
 rms_cte = sqrt(mean(cte_log.^2));
 fprintf('RMS Cross-Track Error: %.10f m\n', rms_cte);
+obstacles = [];
