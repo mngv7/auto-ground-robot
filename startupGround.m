@@ -39,16 +39,43 @@ waypoints = [init_state; waypoints];
 
 complete_path = [];
 
-for i = 1:5
-    curr = optimal_waypoints(i,:); % 2 2
-    next = optimal_waypoints(i+1,:); % 2 15
-    idx_curr = find(ismember(waypoints, curr, 'rows'));
-    idx_next = find(ismember(waypoints, next, 'rows'));
-    path = squeeze(paths(idx_curr, idx_next, 1:10, :));
-    if i ~= 5
-        path(end,:) = [];
+% Construct the complete path using the optimally ordered waypoints
+% and 4D paths matrix
+for i = 1:size(optimal_waypoints, 1)-1
+    curr = optimal_waypoints(i,:); % Current waypoint
+    next = optimal_waypoints(i+1,:); % Next waypoint
+    
+    idx_curr = find(ismembertol(waypoints, curr, 'ByRows', true, 'DataScale', 1e-6), 1);
+    idx_next = find(ismembertol(waypoints, next, 'ByRows', true, 'DataScale', 1e-6), 1);
+    
+    if isempty(idx_curr) || isempty(idx_next)
+        warning('Waypoint not found: curr = [%f, %f], next = [%f, %f]', ...
+                curr(1), curr(2), next(1), next(2));
+        continue;
     end
-    complete_path = [complete_path; path];
+    
+    path_segment = squeeze(paths(idx_curr, idx_next, :, :));
+    
+    valid_rows = any(path_segment ~= 0, 2);
+    path_segment = path_segment(valid_rows, :);
+    
+    if isempty(path_segment)
+        warning('Empty path between waypoints %d and %d', idx_curr, idx_next);
+        continue;
+    end
+    
+    if i < size(optimal_waypoints, 1)-1
+        path_segment = path_segment(1:end-1, :);
+    end
+    
+    complete_path = [complete_path; path_segment];
+end
+
+complete_path = complete_path(any(complete_path ~= 0, 2), :);
+
+if ~isempty(complete_path)
+    complete_path(1,:) = optimal_waypoints(1,:);
+    complete_path(end,:) = optimal_waypoints(end,:);
 end
 
 %% Sanity check
