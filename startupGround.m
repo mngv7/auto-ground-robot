@@ -29,13 +29,43 @@ wall_padding = [2, -2];
 
 no_waypoints = 5;
 
-X = randi(x_bound + wall_padding, no_waypoints , 1);
-Y = randi(y_bound + wall_padding, no_waypoints , 1);
+waypoints = generate_waypoints(logical_map, x_bound, y_bound, no_waypoints, obstacles);
 
-waypoints = [X Y];
-
-optimal_waypoints = optimize_waypoints(waypoints, init_state);
+[optimal_waypoints, paths] = optimize_waypoints(waypoints, init_state, logical_map);
 optimal_waypoints = [init_state; optimal_waypoints];
+
+% Make paths symmetric
+for i = 1:size(paths,1)
+    for j = 1:size(paths,2)
+        if all(paths(i,j,:,:) == 0, 'all') && any(paths(j,i,:,:) ~= 0, 'all')
+            paths(i,j,:,:) = flip(paths(j,i,:,:), 3);
+        end
+    end
+end
+
+waypoints = [init_state; waypoints];
+
+complete_path = [];
+
+for i = 1:5
+    curr = optimal_waypoints(i,:); % 2 2
+    next = optimal_waypoints(i+1,:); % 2 15
+    idx_curr = find(ismember(waypoints, curr, 'rows'));
+    idx_next = find(ismember(waypoints, next, 'rows'));
+    path = squeeze(paths(idx_curr, idx_next, 1:10, :));
+    if i ~= 5
+        path(end,:) = [];
+    end
+    complete_path = [complete_path; path];
+end
+
+%% Sanity check
+
+imagesc(logical_map);       % visualize the map
+colormap(flipud(gray));  % flip the colormap upside down
+axis equal tight;
+xlabel('X'); ylabel('Y');
+title('Logical Map');
 
 %% Run simulation and measure time
 tic;
@@ -70,4 +100,7 @@ fprintf('Average Waypoint Capture Error: %.4f m\n', avg_capture_error);
 cte_log = evalin('base','cte_log');
 rms_cte = sqrt(mean(cte_log.^2));
 fprintf('RMS Cross-Track Error: %.10f m\n', rms_cte);
+<<<<<<< HEAD
 obstacles = [];
+=======
+>>>>>>> 9e519088e397ff2cd066ecd775b40024883dce7c
