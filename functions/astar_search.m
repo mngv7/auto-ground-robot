@@ -70,8 +70,20 @@ while ~isempty(open_set)
         if nx < 1 || nx > size(map,2) || ny < 1 || ny > size(map,1)
             continue
         end
-        % Check obstacle
+        % Check wall
         if map(ny, nx) == 1
+            continue
+        end
+        % Check near wall
+        near = 0;
+        for l = 1:size(moves,1)
+            padded_neigbour = neighbor + (moves(l,:) * 4);
+            padded_nx = padded_neigbour(1); padded_ny = padded_neigbour(2);
+            if map(padded_ny, padded_nx) == 1
+                near = 1;
+            end
+        end
+        if near == 1
             continue
         end
         tentative_g = g_score(current_idx(2), current_idx(1)) + norm(neighbor - current_idx);
