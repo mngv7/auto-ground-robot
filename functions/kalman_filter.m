@@ -9,12 +9,19 @@ function [state_hat, k_gain] = kalman_filter(state_noisy)
         0,0,0,1,0,0;...
         0,0,0,0,1,0;...
         0,0,0,0,0,1];
-        
         % Process noise covariance Q
-        Q = diag([0.1362, 0.08, 0.534, 0.1, 0.1, 0.1]);  % 6x6 diagonal covariance matrix        
+        Q = diag([0.1362, 0.1362, 0.72, 0.52, 0.52, 1]);  % 6x6 diagonal covariance matrix        
         % Measurement noise covariance R
-        R = diag([0.1 0.01 0.88]);  
-        
+        R = diag([1, 1, 0.5])*1e2; 
+        % Process noise covariance Q
+        % Q = diag([0.0862, 0.075, 0.7826, 0.37, 0.37, 0.42]);  % 6x6 diagonal covariance matrix        
+        % Measurement noise covariance R
+        % R = diag([1.05e3 1.05e3 0.88e3]);  
+        % sigma = 0.013;
+        % sigma_dot = sigma;
+        % Q = diag([sigma, sigma, sigma, sigma_dot, sigma_dot, sigma_dot]);
+        % Const_R = 100;
+        % R = Const_R .* eye(3);
         % measurement matrix
         H=[1,0,0,0,0,0;...
         0,1,0,0,0,0;...

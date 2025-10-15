@@ -10,7 +10,7 @@ function [optimal_waypoints, paths] = optimize_waypoints(waypoints, init_state, 
 
     %% Distance matrix
     D = diag(inf(1, num_of_waypoints));
-    wp_interval = 10;
+    wp_interval = 20;
 
     paths = zeros(num_of_waypoints, num_of_waypoints, wp_interval, 2);  
 
