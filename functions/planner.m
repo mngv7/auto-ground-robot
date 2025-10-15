@@ -44,17 +44,18 @@ function [n, stop] = planner(waypoints, position, capture_threshold, detections,
         end
     end
 
-    % ===== Detection print =====
-    if ~isempty(detections)
-        % Find obstacles within detection_threshold distance
-        for i = 1:size(detections,1)
-            dx = x - detections(i,1);
-            dy = y - detections(i,2);
-            dist = hypot(dx, dy);
-
-            
-        end
-    end
+    % % ===== Detection print =====
+    % if ~isempty(detections)
+    %     % Find obstacles within detection_threshold distance
+    %     for i = 1:size(detections,1)
+    %         dx = x - detections(i,1);
+    %         dy = y - detections(i,2);
+    %         dist = hypot(dx, dy);
+    % 
+    %         fprintf('[Planner] Detection made at (%.2f, %.2f)\n', ...
+    %                 detections(i,1), detections(i,2));
+    %     end
+    % end
 
 
     n = idx;
