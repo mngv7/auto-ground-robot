@@ -16,7 +16,6 @@ load('complexMap_air_ground.mat')
 
 %% LiDAR configuration
 scan_angles = linspace(-pi/4,pi/4,50);
-k = 1;
 %% Generate and Optimize Waypoints
 init_state = [robot.X robot.Y];
 
