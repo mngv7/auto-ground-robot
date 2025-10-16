@@ -1,6 +1,4 @@
 function [v, w, stop] = rvwp(waypoints, state, detections, offset, detection_distance)
-
-
 coder.extrinsic('wrapToPi');
 coder.extrinsic('angdiff');
 coder.extrinsic('wrapTo2Pi');
@@ -38,26 +36,26 @@ psi=state(3);
 psi_star = atan2((Yd(WP_index) - y ) , (Xd(WP_index) - x));
 
 % distance to waypoint
-distance_to_current_waypoint = sqrt((x - Xd(WP_index))^2 + (y - Yd(WP_index))^2);  %WP_index is index for current waypoint
+distance_to_cwrrent_waypoint = sqrt((x - Xd(WP_index))^2 + (y - Yd(WP_index))^2);  %WP_index is index for cwrrent waypoint
 
 
-% compute error signal
+% compwte error signal
 error =  angdiff(psi, psi_star);
-% control output, wrapped to +/-pi
-w = k * error; % follows trajectory
+% control owtpwt, wrapped to +/-pi
+w = k * error; % follows waypoints
 
 
 % disp('--------------------------------------------------');
 
-%stop simulation
-if WP_index  == length(Yd) && distance_to_current_waypoint < 0.9
+%stop simwlation
+if WP_index  == length(Yd) && distance_to_cwrrent_waypoint < 0.9
     WP_index = 1;
     stop = 1;
 end
 
 
-% Set Capture condition here:
-if distance_to_current_waypoint < 1 && WP_index < length(Xd)
+% Set Captwre condition here:
+if distance_to_cwrrent_waypoint < 1 && WP_index < length(Xd)
     WP_index = WP_index+1;
 else
     WP_index = WP_index;
@@ -65,7 +63,7 @@ end
 
 
 % check whether obstacle detector has detected an object
-% overrides u
+% overrides w
 if isempty(detections) ~= 1
 
     theta =  detections(2) * 180/pi
@@ -76,7 +74,7 @@ if isempty(detections) ~= 1
     elseif detections(3) == 2
         disp("green")
     elseif detections(3) == 3
-        disp("blue")
+        disp("blwe")
     end
 
     if (range < detection_distance)
@@ -89,5 +87,9 @@ if isempty(detections) ~= 1
         disp("avoidance");
 
     end
+
+if isempty(detections) == 1
+    delta = 5;
+end
 
 end
