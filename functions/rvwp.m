@@ -1,93 +1,114 @@
-function [v, w, stop] = rvwp(waypoints, state, detections, offset, detection_distance)
+function [v, w, stop] = rvwp(waypoints, state, detections, offset, detection_distance, lidar_detections, lidar_scan_angle)
+    coder.extrinsic('angdiff');
 
+    stop = 0;
+    v = 0.5;
+    error = 0.0;
 
-coder.extrinsic('wrapToPi');
-coder.extrinsic('angdiff');
-coder.extrinsic('wrapTo2Pi');
+    persistent WP_index vfh prev_error integ_error prev_time
 
-stop = 0;
-v = 0.5;
+    if isempty(WP_index)
+        WP_index = 1;
 
-%%%%%%%
-% Upon the first call we need to initialize the variables.
-persistent WP_index;
+        % Initialize VFH Controller
+        vfh = controllerVFH('UseLidarScan', true);
+        vfh.DistanceLimits   = [0.1 detection_distance + 3]; % Sensor limits
+        vfh.RobotRadius      = 0.25;  % Inflate robot size
+        vfh.SafetyDistance   = 0.5;   % Keep extra clearance from walls
+        vfh.MinTurningRadius = 0.3;   % Smoother turns
+        vfh.HistogramThresholds = [2 8];
 
-if isempty(WP_index)
-    WP_index = 1;
-end
-
-
-%controller gain
-k = 0.70;
-
-Xd=waypoints(:,1);
-Yd=waypoints(:,2);
-
-w=0.0;
-
-% Extract waypoint list
-Xd(WP_index);
-Yd(WP_index);
-
-%extract vehicle state
-x=state(1);
-y=state(2);
-psi=state(3);
-
-% current heading to waypoint
-psi_star = atan2((Yd(WP_index) - y ) , (Xd(WP_index) - x));
-
-% distance to waypoint
-distance_to_current_waypoint = sqrt((x - Xd(WP_index))^2 + (y - Yd(WP_index))^2);  %WP_index is index for current waypoint
-
-
-% compute error signal
-error =  angdiff(psi, psi_star);
-% control output, wrapped to +/-pi
-w = k * error; % follows trajectory
-
-
-% disp('--------------------------------------------------');
-
-%stop simulation
-if WP_index  == length(Yd) && distance_to_current_waypoint < 0.9
-    WP_index = 1;
-    stop = 1;
-end
-
-
-% Set Capture condition here:
-if distance_to_current_waypoint < 1 && WP_index < length(Xd)
-    WP_index = WP_index+1;
-else
-    WP_index = WP_index;
-end
-
-
-% check whether obstacle detector has detected an object
-% overrides u
-if isempty(detections) ~= 1
-
-    theta =  detections(2) * 180/pi
-    range =  detections(1);
-
-    if detections(3) == 1
-        disp("red")
-    elseif detections(3) == 2
-        disp("green")
-    elseif detections(3) == 3
-        disp("blue")
+        prev_error = 0.0;
+        integ_error = 0.0;
+        prev_time = 0.0;
     end
 
-    if (range < detection_distance)
-        if (theta > 0)
-            w =  k  * (theta - psi - offset) * pi / 180;
-        else
-            w =  k * (theta - psi + offset) * pi / 180;
+    % PID gains
+    Kp = 0.7;
+    Ki = 0.05;
+    Kd = 0.1;
+    w = 0.0;
+    dt = 0.05;  % Time step
+    Xd = waypoints(:,1);
+    Yd = waypoints(:,2);
+
+    % Extract vehicle state
+    x = state(1);
+    y = state(2); 
+    psi = state(3);
+
+    % Desired heading to current waypoint
+    psi_star = atan2((Yd(WP_index) - y), (Xd(WP_index) - x));
+
+    % Check for obstacle detection 
+    if ~isempty(detections) 
+        theta = detections(2) * 180/pi; 
+        range = detections(1); 
+        if (range < detection_distance) 
+            if (theta > 0) 
+                psi_star = (theta - psi - offset) * pi / 180; 
+            else 
+                psi_star = (theta - psi + offset) * pi / 180;
+            end 
+        end 
+    end 
+    
+    % ----- Wall Avoidance Enhancement -----
+    if ~isempty(lidar_detections)
+        % Artificially inflate obstacle proximity (makes robot steer away earlier)
+        inflation = 0.3;  % meters
+        inflated_ranges = max(lidar_detections - inflation, 0);
+        scan = lidarScan(inflated_ranges, lidar_scan_angle);
+
+        % Get avoidance direction from VFH
+        targetDir = psi_star;  % toward current waypoint
+        steerDir = vfh(scan, targetDir);
+
+        if ~isnan(steerDir)
+            psi_star = steerDir;  % override heading if obstacle nearby
         end
+    end
+    % -------------------------------------
 
-        disp("avoidance");
+    % Compute distance to current waypoint
+    distance_to_current_waypoint = sqrt((x - Xd(WP_index))^2 + (y - Yd(WP_index))^2);
 
+    % Adjust linear velocity based on distance to waypoint
+    if distance_to_current_waypoint < 1
+        v = 0.1;  % Slow down near waypoint
+    else
+        v = 0.5;  % Default speed
     end
 
+    % Stop condition
+    if WP_index == length(Yd) && distance_to_current_waypoint < 0.9
+        WP_index = 1;
+        stop = 1;
+    end
+
+    % Move to next waypoint
+    if distance_to_current_waypoint < 1 && WP_index < length(Xd)
+        WP_index = WP_index + 1;
+        % clear pid gains
+        integ_error = 0.0;  % Reset integral error for new waypoint
+        prev_error = 0.0;
+        integ_error = 0.0;
+        prev_time = 0.0;
+    end
+
+    % PID heading control
+    error = double(angdiff(psi, psi_star));
+
+    if isfinite(psi_star)
+        P = Kp * error;
+        integ_error = integ_error + error * dt;
+        I = Ki * integ_error;
+        D = Kd * (error - prev_error) / dt;
+        prev_error = error;
+        w = P ; ...
+            % + I + D
+    else
+        v = 0.1;
+        w = 0.5;
+    end
 end

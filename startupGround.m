@@ -1,5 +1,5 @@
 %% Close previously open model
-close_system('sl_groundvehicleDynamics', 0);
+close_system('sl_groundvehicleDynamics_2025a', 0);
 %% Add toolboxes to path
 homedir = pwd; 
 addpath(genpath(fullfile(homedir, 'toolboxes')));
@@ -10,7 +10,7 @@ startMobileRoboticsSimulationToolbox;
 cd(homedir);
 
 %% Open current model
-open_system('sl_groundvehicleDynamics'); % dif ferential robot
+open_system('sl_groundvehicleDynamics_2025a'); % dif ferential robot
 load('obstacles_air_ground.mat')
 load('complexMap_air_ground.mat')
 
@@ -51,7 +51,7 @@ for i = 1:5
     next = optimal_waypoints(i+1,:); % 2 15
     idx_curr = find(ismember(waypoints, curr, 'rows'));
     idx_next = find(ismember(waypoints, next, 'rows'));
-    path = squeeze(paths(idx_curr, idx_next, 1:20, :));
+    path = squeeze(paths(idx_curr, idx_next, 1:10, :));
     if i ~= 5
         path(end,:) = [];
     end
@@ -68,7 +68,7 @@ title('Logical Map');
 
 %% Run simulation and measure time
 tic;
-out = sim('sl_groundvehicleDynamics');
+out = sim('sl_groundvehicleDynamics_2025a');
 mission_time = toc;
 
 fprintf('Trip time: %.4f s\n', mission_time)
