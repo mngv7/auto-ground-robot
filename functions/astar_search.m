@@ -52,8 +52,25 @@ while ~isempty(open_set)
         distance = sum(sqrt(sum(diff(path).^2,2)));
         
         % Reduce to wp_interval points
-        if length(path) > wp_interval
-            idxs = round(linspace(1, length(path), wp_interval));
+        if ~isempty(path) && wp_interval > 0
+            % Calculate cumulative distances along the path
+            distances = [0; cumsum(sqrt(sum(diff(path).^2, 2)))];
+            total_distance = distances(end);
+            
+            % Target distances at intervals of wp_interval
+            target_distances = 0:wp_interval:total_distance;
+            if isempty(target_distances)
+                path = path(1,:); % If wp_interval is too large, return starting point
+                return
+            end
+            
+            % Find indices of points closest to target distances
+            idxs = zeros(size(target_distances));
+            for i = 1:length(target_distances)
+                [~, idx] = min(abs(distances - target_distances(i)));
+                idxs(i) = idx;
+            end
+            idxs = unique(idxs, 'stable'); % Ensure unique indices, keep order
             path = path(idxs,:);
         end
         return
