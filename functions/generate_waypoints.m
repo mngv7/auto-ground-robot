@@ -26,7 +26,7 @@ function is_valid = validate_point(point, x_bounds, y_bounds, map, obstacles)
     % obstacles: Nx2 array in world coordinates
     % Returns: true if valid, false otherwise
 
-    padding = 0.4;   % safety distance
+    padding = 1;   % safety distance
     is_valid = true;
 
     x = point(1);

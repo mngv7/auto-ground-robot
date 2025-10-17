@@ -68,7 +68,7 @@ title('Logical Map');
 
 %% Run simulation and measure time
 tic;
-out = sim('sl_groundvehicleDynamics_2025a');
+out = sim('sl_groundvehicleDynamics');
 mission_time = toc;
 
 fprintf('Trip time: %.4f s\n', mission_time)

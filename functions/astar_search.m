@@ -77,7 +77,7 @@ while ~isempty(open_set)
         % Check near wall
         near = 0;
         for l = 1:size(moves,1)
-            padded_neigbour = neighbor + (moves(l,:) * 4);
+            padded_neigbour = neighbor + (moves(l,:) * 10);
             padded_nx = padded_neigbour(1); padded_ny = padded_neigbour(2);
             if map(padded_ny, padded_nx) == 1
                 near = 1;
