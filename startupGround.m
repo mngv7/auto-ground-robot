@@ -1,5 +1,5 @@
 %% Close previously open model
-close_system('sl_groundvehicleDynamics_2025a', 0);
+close_system('sl_groundvehicleDynamics', 0);
 %% Add toolboxes to path
 homedir = pwd; 
 addpath(genpath(fullfile(homedir, 'toolboxes')));
@@ -10,7 +10,7 @@ startMobileRoboticsSimulationToolbox;
 cd(homedir);
 
 %% Open current model
-open_system('sl_groundvehicleDynamics_2025a'); % dif ferential robot
+open_system('sl_groundvehicleDynamics'); % dif ferential robot
 load('obstacles_air_ground.mat')
 load('complexMap_air_ground.mat')
 
