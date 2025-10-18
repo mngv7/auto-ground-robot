@@ -10,7 +10,7 @@ startMobileRoboticsSimulationToolbox;
 cd(homedir);
 
 %% Open current model
-open_system('sl_groundvehicleDynamics'); % dif ferential robot
+open_system('sl_groundvehicleDynamics'); % differential robot
 load('obstacles_air_ground.mat')
 load('complexMap_air_ground.mat')
 %% Mask occupancy with obstacles for lidar scanner
