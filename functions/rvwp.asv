@@ -1,8 +1,8 @@
-function [v, w, stop] = rvwp(waypoints, state, lidar_detections, lidar_scan_angle)
+function [v, w, stop] = rvwp(waypoints, state, detections, offset, detection_distance, lidar_detections, lidar_scan_angle)
     coder.extrinsic('angdiff');
 
     stop = 0;
-    v = 0.4;
+    v = 0.5;
     error = 0.0;
 
     persistent WP_index vfh prev_error integ_error prev_time
@@ -11,12 +11,12 @@ function [v, w, stop] = rvwp(waypoints, state, lidar_detections, lidar_scan_angl
         WP_index = 1;
 
         % Initialize VFH Controller
-        vfh = controllerVFH('UseLidarScan', false);
-        vfh.DistanceLimits   = [ 0.05, 3 ];
+        vfh = controllerVFH('UseLidarScan', true);
+        vfh.DistanceLimits   = [0.1 detection_distance + 3]; % Sensor limits
         vfh.RobotRadius      = 0.25;  % Inflate robot size
-        vfh.SafetyDistance   = 0.1;   % Keep extra clearance from walls
-        vfh.MinTurningRadius = 0.2;   % Smoother turns
-        % vfh.HistogramThresholds = [ 1, 2 ];
+        vfh.SafetyDistance   = 0.5;   % Keep extra clearance from walls
+        vfh.MinTurningRadius = 0.3;   % Smoother turns
+        % vfh.HistogramThresholds = [2 8];
         prev_error = 0.0;
         integ_error = 0.0;
         prev_time = 0.0;
@@ -39,21 +39,35 @@ function [v, w, stop] = rvwp(waypoints, state, lidar_detections, lidar_scan_angl
     % Desired heading to current waypoint
     psi_star = atan2((Yd(WP_index) - y), (Xd(WP_index) - x));
     % Distance to current waypoint
+    % Check for obstacle detection 
+    % if ~isempty(detections) 
+    %     theta = detections(2) * 180/pi; 
+    %     range = detections(1);
+    %     % check trajectory with current heading
+    % 
+    %     if (range < detection_distance) 
+    %         if (theta > 0) 
+    %             psi_star = (theta - psi - offset) * pi / 180; 
+    %         else 
+    %             psi_star = (theta - psi + offset) * pi / 180;
+    %         end 
+    %     end 
+    % end 
     
     % ----- Wall Avoidance Enhancement -----
     if ~isempty(lidar_detections)
+
         % Artificially inflate obstacle proximity (makes robot steer away earlier)
+        inflation = 0.3;  % meters
+        inflated_ranges = max(lidar_detections - inflation, 0);
+        scan = lidarScan(inflated_ranges, lidar_scan_angle);
 
         % Get avoidance direction from VFH
         targetDir = psi_star;  % toward current waypoint
-        steerDir = vfh(lidar_detections, lidar_scan_angle, targetDir);
+        steerDir = vfh(scan, targetDir);
 
         if ~isnan(steerDir)
             psi_star = steerDir;  % override heading if obstacle nearby
-        else
-            v = 0.1;
-            w = 2;
-            return
         end
     end
     % -------------------------------------
@@ -61,6 +75,12 @@ function [v, w, stop] = rvwp(waypoints, state, lidar_detections, lidar_scan_angl
     % Compute distance to current waypoint
     distance_to_current_waypoint = sqrt((x - Xd(WP_index))^2 + (y - Yd(WP_index))^2);
 
+    % Adjust linear velocity based on distance to waypoint
+    if distance_to_current_waypoint < 1
+        v = 0.1;  % Slow down near waypoint
+    else
+        v = 0.5;  % Default speed
+    end
 
     % Stop condition
     if WP_index == length(Yd) && distance_to_current_waypoint < 0.9
@@ -69,7 +89,7 @@ function [v, w, stop] = rvwp(waypoints, state, lidar_detections, lidar_scan_angl
     end
 
     % Move to next waypoint
-    if distance_to_current_waypoint < 0.5 && WP_index < length(Xd)
+    if distance_to_current_waypoint < 1 && WP_index < length(Xd)
         WP_index = WP_index + 1;
         % clear pid gains
         integ_error = 0.0;  % Reset integral error for new waypoint
@@ -87,9 +107,8 @@ function [v, w, stop] = rvwp(waypoints, state, lidar_detections, lidar_scan_angl
         I = Ki * integ_error;
         D = Kd * (error - prev_error) / dt;
         prev_error = error;
-        w = P;
-        % ...   
-            % + I + D;
+        w = P ; ...
+            % + I + D
     else
         v = 0.1;
         w = 0.5;
