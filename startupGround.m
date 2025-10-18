@@ -15,8 +15,8 @@ load('obstacles_air_ground.mat')
 load('complexMap_air_ground.mat')
 %% Mask occupancy with obstacles for lidar scanner
 lidar_map = copy(map);
-w = 0.1;
-h = 0.1;
+w = 0.4;
+h = 0.4;
 for i=1:size(obstacles, 1)
     xi = obstacles(i,1);
     yi = obstacles(i,2);
@@ -33,7 +33,7 @@ for i=1:size(obstacles, 1)
     setOccupancy(lidar_map, gridIdx, true, 'grid');
 
 end
-inflate(lidar_map, 0.3);
+inflate(lidar_map, 0.2);
 show(lidar_map)
 %% Sensor configuration
 scan_angles = linspace(-pi/3,pi/3,50);
@@ -49,7 +49,7 @@ wall_padding = [2, -2];
 no_waypoints = 5;
 
 waypoints = generate_waypoints(logical_map, x_bound, y_bound, no_waypoints, []);
-
+%%
 [optimal_waypoints, paths] = optimize_waypoints(waypoints, init_state, logical_map);
 optimal_waypoints = [init_state; optimal_waypoints];
 

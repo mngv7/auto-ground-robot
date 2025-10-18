@@ -51,24 +51,6 @@ function [v, w, stop, cross_track_error] = rvwp(waypoints, state, lidar_detectio
     cross_track_error = abs((y_curr-y_prev)*x - (x_curr-x_prev)*y + x_curr*y_prev - y_curr*x_prev) / ...
                         sqrt((y_curr-y_prev)^2 + (x_curr-x_prev)^2);
     
-    % ----- Wall Avoidance Enhancement -----
-    if ~isempty(lidar_detections)
-        % Artificially inflate obstacle proximity (makes robot steer away earlier)
-
-        % Get avoidance direction from VFH
-        targetDir = psi_star;  % toward current waypoint
-        steerDir = vfh(lidar_detections, lidar_scan_angle, targetDir);
-
-        if ~isnan(steerDir)
-            psi_star = steerDir;  % override heading if obstacle nearby
-        else
-            v = 0.1;
-            w = 2;
-            return
-        end
-    end
-    % -------------------------------------
-
     % Compute distance to current waypoint
     distance_to_current_waypoint = sqrt((x - Xd(WP_index))^2 + (y - Yd(WP_index))^2);
 
@@ -89,6 +71,23 @@ function [v, w, stop, cross_track_error] = rvwp(waypoints, state, lidar_detectio
         prev_time = 0.0;
     end
 
+    % ----- Wall Avoidance Enhancement -----
+    if ~isempty(lidar_detections)
+        % Artificially inflate obstacle proximity (makes robot steer away earlier)
+
+        % Get avoidance direction from VFH
+        targetDir = psi_star;  % toward current waypoint
+        steerDir = vfh(lidar_detections, lidar_scan_angle, targetDir);
+
+        if ~isnan(steerDir)
+            psi_star = steerDir;  % override heading if obstacle nearby
+        else
+            v = 0.1;
+            w = 2;
+            return
+        end
+    end
+    % -------------------------------------
     % PID heading control
     error = double(angdiff(psi, psi_star));
 
@@ -98,9 +97,7 @@ function [v, w, stop, cross_track_error] = rvwp(waypoints, state, lidar_detectio
         I = Ki * integ_error;
         D = Kd * (error - prev_error) / dt;
         prev_error = error;
-        w = P;
-        % ...   
-            % + I + D;
+        w = P + I + D;
     else
         v = 0.1;
         w = 0.5;
