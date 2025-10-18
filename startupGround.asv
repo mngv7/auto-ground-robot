@@ -126,36 +126,30 @@ y_log = clean_pose.Data(2,:);
 
 %% Compute waypoint capture error
 key_waypoints = optimal_waypoints(2:end, :);  % skip initial state
-all_waypoints = complete_path(2: end, :);
+
 
 num_key_waypoints = size(key_waypoints, 1);
-capture_errors_key = zeros(num_key_waypoints, 1);
+capture_errors = zeros(num_key_waypoints, 1);
 
-num_wayponts = size(all_waypoints, 1);
-capture_errors = zeros(num_wayponts, 1);
-
-% Error for key waypoints
 for i = 1:num_key_waypoints
     dx_k = x_log - key_waypoints(i,1);
     dy_k = y_log - key_waypoints(i,2);
     dists = sqrt(dx_k.^2 + dy_k.^2);
-    capture_errors_key(i) = min(dists); % closest distance to this key waypoint
+    capture_errors(i) = min(dists); % closest distance to this key waypoint
 end
 
-% Error for complete path
-for i = 1:size(complete_path, 1)
+for i = 1:complete_path
     dx = x_log - complete_path(i,1);
     dy = y_log - complete_path(i,2);
     dists = sqrt(dx.^2 + dy.^2);
-    capture_errors(i) = min(dists); % closest distance to this path waypoint
+    capture_errors(i) = min(dists); % closest distance to this key waypoint
 end
 
-avg_capture_error_key = mean(capture_errors_key);
-fprintf('Average Key Waypoint Capture Error: %.4f m\n', avg_capture_error_key);
+avg_capture_error = mean(capture_errors);
+fprintf('Average Key Waypoint Capture Error: %.4f m\n', avg_capture_error);
 
-avg_capture_error_complete = mean(capture_errors);
-fprintf('Average Complete Path Capture Error: %.4f m\n', avg_capture_error_complete);
-
+avg_capture_error = mean(capture_errors);
+fprintf('Average Waypoint Capture Error: %.4f m\n', avg_capture_error);
 
 %% Compute RMS cross-track error
 cte_time = cross_track_error.Time;

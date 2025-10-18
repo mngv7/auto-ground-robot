@@ -1,4 +1,4 @@
-function [v, w, stop, cross_track_error] = rvwp(waypoints, state, lidar_detections, lidar_scan_angle)
+function [v, w, stop, cross_track_error] = guidance(waypoints, state, lidar_detections, lidar_scan_angle)
     coder.extrinsic('angdiff');
 
     stop = 0;
