@@ -160,7 +160,7 @@ fprintf('RMS Cross-Track Error: %.6f m\n', rms_cte);
 % Plot
 figure;
 plot(cte_time, cte_data);
-xlabel('Time (s)');
-ylabel('Cross-Track Error (m)');
-title('CTE vs Time');
+xlabel('Time [s]');
+ylabel('Cross-Track Error [m]');
+title('Robot Cross-Track Error Over Time');
 grid on;
