@@ -1,12 +1,12 @@
-function [v, w, stop] = rvwp(waypoints, state, lidar_detections, lidar_scan_angle)
+function [v, w, stop, cross_track_error] = rvwp(waypoints, state, lidar_detections, lidar_scan_angle)
     coder.extrinsic('angdiff');
 
     stop = 0;
     v = 0.4;
     error = 0.0;
+    cross_track_error = 0;
 
     persistent WP_index vfh prev_error integ_error prev_time
-
     if isempty(WP_index)
         WP_index = 1;
 
@@ -39,6 +39,17 @@ function [v, w, stop] = rvwp(waypoints, state, lidar_detections, lidar_scan_angl
     % Desired heading to current waypoint
     psi_star = atan2((Yd(WP_index) - y), (Xd(WP_index) - x));
     % Distance to current waypoint
+
+    % Compute Cross-Track Error
+    if WP_index == 1
+        x_prev = Xd(1); y_prev = Yd(1);
+    else
+        x_prev = Xd(WP_index-1); y_prev = Yd(WP_index-1);
+    end
+    x_curr = Xd(WP_index); y_curr = Yd(WP_index);
+
+    cross_track_error = abs((y_curr-y_prev)*x - (x_curr-x_prev)*y + x_curr*y_prev - y_curr*x_prev) / ...
+                        sqrt((y_curr-y_prev)^2 + (x_curr-x_prev)^2);
     
     % ----- Wall Avoidance Enhancement -----
     if ~isempty(lidar_detections)

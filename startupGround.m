@@ -119,30 +119,48 @@ out = sim('sl_groundvehicleDynamics');
 mission_time = toc;
 
 fprintf('Trip time: %.4f s\n', mission_time)
-if isempty(simout)
-    %%Extract pose data
-    x_log = out.simout.pose.Data(:,1);
-    y_log = out.simout.pose.Data(:,2);
-else
-    x_log = simout.pose.Data(:,1);
-    y_log = simout.pose.Data(:,2);
-end
 
-% Compute waypoint capture error
-num_waypoints = size(optimal_waypoints, 1);
-capture_errors = zeros(num_waypoints, 1);
+x_log = simout.pose.Data(:,1);
+y_log = simout.pose.Data(:,2);
 
-for i = 1:num_waypoints
-    dx = x_log - optimal_waypoints(i,1);
-    dy = y_log - optimal_waypoints(i,2);
+
+%% Compute waypoint capture error
+key_waypoints = optimal_waypoints(2:end, :);  % skip initial state
+
+num_key_waypoints = size(key_waypoints, 1);
+capture_errors = zeros(num_key_waypoints, 1);
+
+for i = 1:num_key_waypoints
+    dx = x_log - key_waypoints(i,1);
+    dy = y_log - key_waypoints(i,2);
     dists = sqrt(dx.^2 + dy.^2);
-    capture_errors(i) = min(dists); % closest distance to waypoint
+    capture_errors(i) = min(dists); % closest distance to this key waypoint
 end
+
+avg_capture_error = mean(capture_errors);
+fprintf('Average Key Waypoint Capture Error: %.4f m\n', avg_capture_error);
 
 avg_capture_error = mean(capture_errors);
 fprintf('Average Waypoint Capture Error: %.4f m\n', avg_capture_error);
 
-% Compute RMS cross-track error
-cte_log = evalin('base','cte_log');
-rms_cte = sqrt(mean(cte_log.^2));
-fprintf('RMS Cross-Track Error: %.10f m\n', rms_cte);
+%% Compute RMS cross-track error
+cte_time = cross_track_error.Time;
+cte_data = cross_track_error.Data;
+
+% Pop first and last value (will be NaN).
+cte_data(1) = [];
+cte_time(1) = [];
+
+cte_data(end) = [];
+cte_time(end) = [];
+
+rms_cte = sqrt(mean(cte_data.^2));
+fprintf('RMS Cross-Track Error: %.6f m\n', rms_cte);
+
+% Plot
+figure;
+plot(cte_time, cte_data);
+xlabel('Time (s)');
+ylabel('Cross-Track Error (m)');
+title('CTE vs Time');
+grid on;
